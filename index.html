@@ -127,6 +127,16 @@ input[type=checkbox]{accent-color:#2e8f55}
 #proM .plans{display:flex;gap:8px;margin:12px 0 4px}
 #proM .plans button{flex:1;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px}
 #proM .plans button.go{border-color:#2e6b44}
+#scanM{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+#scanM[hidden]{display:none}
+#scanM .box{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;max-width:420px;width:100%}
+#scanM h2{font-size:20px;margin:0 0 10px}
+#scanM .vw{position:relative;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:1/1}
+#scanM video{width:100%;height:100%;object-fit:cover;display:block}
+#scanM .fr{position:absolute;inset:18%;border:3px solid #9bd6a8;border-radius:16px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
+#scanM .acts{display:flex;gap:8px;margin-top:12px}
+#scanM .acts button{flex:1}
+.scanRow{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 </style>
 </head>
 <body>
@@ -213,10 +223,14 @@ input[type=checkbox]{accent-color:#2e8f55}
 
 <div class="card">
   <h2>חיבור Wi-Fi</h2>
-  <div class="row first"><span>שם הרשת</span><input type="text" id="wSsid" autocomplete="off" style="width:60%"></div>
+  <div class="row first"><span>מילוי מהיר</span><span class="scanRow"><button type="button" class="go" id="wScan">סרוק ברקוד Wi-Fi</button><button type="button" id="wPick">מתמונה</button></span></div>
+  <input type="file" id="wFile" accept="image/*" hidden>
+  <div class="note" id="wScanMsg" aria-live="polite" style="margin:0 0 6px"></div>
+  <div class="row"><span>שם הרשת</span><input type="text" id="wSsid" autocomplete="off" style="width:60%"></div>
   <div class="row"><span>סיסמה</span><input type="password" id="wPass" autocomplete="off" style="width:60%"></div>
   <div class="row"><span></span><button class="go" id="wSave">שמור והתחבר</button></div>
   <p class="note">אחרי השמירה הבקר יתחבר לרשת ויתאתחל. אם לא ייתחבר, הוא יפתח שוב את רשת "Greenhouse".</p>
+  <p class="note">ברוב הנתבים יש ברקוד Wi-Fi על המדבקה שבגב הנתב. אפשר גם לסרוק את הברקוד שטלפון אחר מציג ב"שיתוף Wi-Fi", או לבחור צילום מסך שלו.</p>
 </div>
 
 <div class="card">
@@ -305,6 +319,13 @@ input[type=checkbox]{accent-color:#2e8f55}
 <p class="note">רגיסטר 2575 (0x0A0F), 9600 8N1, כתובת 0xFE. עבור 60 שניות זהה לדוגמה ב-PDF.</p>
 </div>
 </details>
+
+<div id="scanM" hidden><div class="box" role="dialog" aria-modal="true" aria-labelledby="scanT">
+  <h2 id="scanT">סריקת ברקוד Wi-Fi</h2>
+  <div class="vw"><video id="scanV" playsinline muted autoplay></video><div class="fr"></div></div>
+  <div class="note" id="scanSt" aria-live="polite">מפעיל מצלמה…</div>
+  <div class="acts"><button type="button" id="scanPick">בחר תמונה</button><button type="button" id="scanX">סגור</button></div>
+</div></div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -395,6 +416,76 @@ $('pairBtn').onclick=async()=>{
  $('pairMsg').textContent='';
  try{const r=await api('pair',{});store('token',r.token);refresh();loadChart()}
  catch(e){$('pairMsg').textContent=e.code===403?'חלון הצימוד סגור. החזק את BOOT 3 שניות ונסה שוב.':'שגיאת חיבור'}};
+
+/* ---------- סריקת ברקוד Wi-Fi ---------- */
+// פורמט סטנדרטי: WIFI:T:WPA;S:<שם>;P:<סיסמה>;H:false;;
+function parseWifiQR(s){
+ s=(s||'').trim();if(!/^WIFI:/i.test(s))return null;
+ const o={};let cur='',key=null,esc=false;
+ for(const ch of s.slice(5)){
+  if(esc){cur+=ch;esc=false}
+  else if(ch==='\\')esc=true;
+  else if(ch===':'&&key===null){key=cur.toUpperCase();cur=''}
+  else if(ch===';'){if(key!==null)o[key]=cur;key=null;cur=''}
+  else cur+=ch}
+ if(key!==null)o[key]=cur;
+ if(!o.S)return null;
+ return{ssid:o.S,pass:o.P||'',type:(o.T||'').toUpperCase(),hidden:/^true$/i.test(o.H||'')}}
+let bd=null;try{if('BarcodeDetector'in window)bd=new BarcodeDetector({formats:['qr_code']})}catch(e){bd=null}
+let jsqrP=null;
+function loadJsQR(){
+ if(window.jsQR)return Promise.resolve();if(jsqrP)return jsqrP;
+ jsqrP=(async()=>{for(const u of['jsQR.js','https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js']){
+  try{await new Promise((ok,no)=>{const sc=document.createElement('script');sc.src=u;sc.onload=ok;sc.onerror=()=>{sc.remove();no()};document.head.appendChild(sc)});if(window.jsQR)return}catch(e){}}
+  throw new Error('nodecoder')})();
+ jsqrP.catch(()=>{jsqrP=null});return jsqrP}
+const qcv=document.createElement('canvas');
+async function decodeQR(src,alsoJs){
+ if(bd){try{const r=await bd.detect(src);if(r.length)return r[0].rawValue}catch(e){bd=null}if(bd&&!alsoJs)return null}
+ try{await loadJsQR()}catch(e){if(bd)return null;throw e}
+ const w=src.videoWidth||src.naturalWidth||src.width,h=src.videoHeight||src.naturalHeight||src.height;if(!w||!h)return null;
+ const k=Math.min(1,1000/Math.max(w,h));qcv.width=Math.round(w*k);qcv.height=Math.round(h*k);
+ const cx=qcv.getContext('2d',{willReadFrequently:true});cx.drawImage(src,0,0,qcv.width,qcv.height);
+ const d=cx.getImageData(0,0,qcv.width,qcv.height),r=jsQR(d.data,qcv.width,qcv.height,{inversionAttempts:'attemptBoth'});
+ return r?r.data:null}
+function applyWifi(raw){
+ const w=parseWifiQR(raw);if(!w)return null;
+ $('wSsid').value=w.ssid;$('wPass').value=w.pass;banner('');
+ $('wScanMsg').textContent=`נמצאה הרשת "${w.ssid}". `+(w.pass?'הסיסמה מולאה. ':'זו רשת פתוחה, בלי סיסמה. ')+'לחץ "שמור והתחבר".';
+ return w}
+let scanStream=null,scanOn=false;
+function stopScan(){scanOn=false;if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}$('scanV').srcObject=null;$('scanM').hidden=true}
+async function startScan(){
+ if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)||!window.isSecureContext){$('wFile').click();return}
+ $('scanM').hidden=false;$('scanSt').textContent='מפעיל מצלמה…';
+ try{scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false})}
+ catch(e){stopScan();$('wScanMsg').textContent='אין גישה למצלמה. אפשר ללחוץ "מתמונה" ולבחור צילום של הברקוד.';return}
+ if($('scanM').hidden){stopScan();return}
+ const v=$('scanV');v.srcObject=scanStream;try{await v.play()}catch(e){}
+ $('scanSt').textContent='כוון את המצלמה לברקוד שעל הנתב';scanOn=true;
+ if(!bd)loadJsQR().catch(()=>{if(scanOn)$('scanSt').textContent='אין מפענח ברקוד זמין. התחבר לאינטרנט ונסה שוב.'});
+ let n=0;
+ const tick=async()=>{if(!scanOn)return;
+  let r=null;if(v.readyState>=2){try{r=await decodeQR(v,++n%4===0)}catch(e){}}
+  if(!scanOn)return;
+  if(r){if(applyWifi(r)){stopScan();try{navigator.vibrate&&navigator.vibrate(80)}catch(e){}return}
+   $('scanSt').textContent='זה לא ברקוד של רשת Wi-Fi. נסה ברקוד אחר.'}
+  setTimeout(tick,250)};
+ tick()}
+$('wScan').onclick=startScan;
+$('wPick').onclick=()=>$('wFile').click();
+$('scanPick').onclick=()=>{stopScan();$('wFile').click()};
+$('scanX').onclick=stopScan;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('scanM').hidden)stopScan()});
+$('wFile').onchange=async e=>{
+ const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
+ $('wScanMsg').textContent='קורא את הברקוד מהתמונה…';
+ const url=URL.createObjectURL(f);
+ try{const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=url});
+  const r=await decodeQR(img,true);
+  if(!applyWifi(r))$('wScanMsg').textContent=r?'זה לא ברקוד של רשת Wi-Fi.':'לא נמצא ברקוד בתמונה. נסה תמונה חדה וקרובה יותר.'}
+ catch(err){$('wScanMsg').textContent='לא הצלחתי לקרוא את הברקוד. בפעם הראשונה צריך חיבור לאינטרנט.'}
+ finally{URL.revokeObjectURL(url)}};
 
 /* ---------- תזכורות ---------- */
 const DAYS=['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','שבת'];
