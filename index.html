@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#131512">
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&display=swap">
+<title>בקרת חממה</title>
+<style>
+:root{--bg:#131512;--card:#1c1e1d;--line:#34383a;--tx:#e7efe4;--mut:#9aa39a;--warn:#ef8a64;--ok:#0f6b36}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 Heebo,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans Hebrew",Arial,sans-serif;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));max-width:520px;margin-inline:auto;-webkit-font-smoothing:antialiased}
+h1{font-size:28px;margin:6px 0 12px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;margin-bottom:14px}
+.card h2{font-size:17px;margin:0 0 8px;display:flex;justify-content:space-between;align-items:center}
+.row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.card h2+.row,.row.first{border-top:0}
+.big{font-size:44px;font-weight:700;color:#dfeede;direction:ltr}
+.val{font-weight:700;direction:ltr}
+button{font:inherit;border:0;border-radius:12px;padding:12px 18px;color:#fff;background:#3a3d3f;cursor:pointer}
+button.go{background:var(--ok)}
+button:disabled{opacity:.45}
+input,select{background:#232624;color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit}
+input[type=number]{width:84px;text-align:center}
+.pill{border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:13px;color:var(--mut);font-weight:400}
+.pill.on{color:#9bd6a8;border-color:#2e6b44}
+.pill.off{color:var(--warn);border-color:#7a4330}
+.alert{color:var(--warn);font-weight:700;padding:4px 0}
+.note{color:var(--mut);font-size:14px;margin:8px 0 0}
+.hide{display:none}
+.x{background:none;color:var(--mut);padding:4px 10px}
+.add{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.add input[type=text]{flex:1;min-width:120px}
+.stats{display:flex;justify-content:space-between;color:var(--mut);font-size:14px;margin-top:6px}
+#banner{position:sticky;top:8px;z-index:5;background:#3b2217;border:1px solid #7a4330;color:#ffd9c7;border-radius:14px;padding:10px 14px;margin-bottom:12px}
+svg{width:100%;height:auto;display:block}
+#lw{padding:0}
+#lw>summary{list-style:none;cursor:pointer;font-size:17px;font-weight:700;display:flex;justify-content:space-between;align-items:center;padding:18px}
+#lw>summary::-webkit-details-marker{display:none}
+#lw .lwb{padding:0 18px 18px}
+#lw h3{font-size:15px;margin:18px 0 4px;padding-top:14px;border-top:1px solid var(--line)}
+#lw h3.f{border-top:0;margin-top:0;padding-top:0}
+#lw .lwg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+#lw label{display:flex;flex-direction:column;font-size:13px;color:var(--mut);gap:3px;min-width:0}
+#lw input,#lw select,#lw textarea{width:100%;min-width:0;text-align:start}
+#lw input[type=range]{padding:0;accent-color:#9bd6a8}
+#lw textarea{direction:ltr;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px;min-height:70px;background:#232624;color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px}
+#lw .lwo{background:#232624;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px}
+#lw .lwm{direction:ltr;unicode-bidi:isolate;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;word-break:break-all;text-align:left}
+#lw .lwbig{font-size:30px;font-weight:700;color:#dfeede}
+#lw .lwr{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+#lw .lwr button{padding:8px 14px;font-size:14px}
+#lw table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+#lw td,#lw th{text-align:start;padding:5px 6px;border-top:1px solid var(--line)}
+#lw th{color:var(--mut);font-weight:400;font-size:12px;border-top:0}
+#lw .lwv{direction:ltr;text-align:end}
+#lw .lwbd{display:inline-block;border-radius:999px;padding:2px 10px;font-size:13px}
+#lw .lwok{background:#1f3a28;color:#9bd6a8}#lw .lwwarn{background:#3b2217;color:#ef8a64}#lw .lwbad{background:#3b1d1d;color:#f28b82}
+#lw svg text{fill:var(--mut);font-size:11px}
+#ap{border-color:#2e6b44}
+#ap .aprow{display:flex;justify-content:space-between;align-items:center;gap:10px}
+#ap h2{margin:0}
+#ap ul{margin:10px 0 0;padding-inline-start:20px;color:var(--mut);font-size:14px}
+#ap li{margin:3px 0}
+#ap .sw{position:relative;width:54px;height:30px;flex:none}
+#ap .sw input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;cursor:pointer;z-index:2}
+#ap .sw span{position:absolute;inset:0;background:#3a3d3f;border-radius:999px;transition:.2s}
+#ap .sw span:after{content:"";position:absolute;top:3px;inset-inline-start:3px;width:24px;height:24px;background:#fff;border-radius:50%;transition:.2s}
+#ap .sw input:checked+span{background:var(--ok)}
+#ap .sw input:checked+span:after{inset-inline-start:27px}
+#ap .sw input:focus-visible+span{outline:2px solid #9bd6a8;outline-offset:2px}
+#ap .on-note{background:#1f3a28;color:#9bd6a8;border-radius:12px;padding:10px 12px;margin-top:12px;font-size:14px}
+button:disabled,input:disabled{opacity:.45;cursor:not-allowed}
+#ai .msgs{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin:10px 0}
+#ai .m{padding:10px 12px;border-radius:14px;max-width:92%;white-space:pre-wrap;word-break:break-word;font-size:15px}
+#ai .m.u{align-self:flex-start;background:#232624;border:1px solid var(--line)}
+#ai .m.a{align-self:flex-end;background:#1f3a28;color:#dff3e3}
+#ai .chips{display:flex;gap:6px;flex-wrap:wrap}
+#ai .chips button{padding:7px 12px;font-size:13px;background:#232624;border:1px solid var(--line);color:var(--mut)}
+#ai form{display:flex;gap:6px;margin-top:10px}
+#ai form input{flex:1;min-width:0}
+#cal .nav{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 0 10px}
+#cal .nav b{font-size:17px}
+#cal .nav button{padding:8px 14px}
+#cal .grid{display:grid;grid-template-columns:repeat(7,1fr) 46px;gap:4px}
+#cal .hd{text-align:center;color:var(--mut);font-size:12px;padding:2px 0}
+#cal .d{position:relative;aspect-ratio:1/1;border-radius:12px;background:#232624;border:1px solid transparent;padding:0;color:var(--tx);font-size:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0}
+#cal .d.o{opacity:.35}
+#cal .d.today{border-color:#9bd6a8}
+#cal .d.sel{background:#1f3a28;border-color:#2e6b44}
+#cal .d .bar{width:60%;height:4px;border-radius:2px;background:transparent}
+#cal .d .nt{position:absolute;top:4px;inset-inline-end:5px;width:6px;height:6px;border-radius:50%;background:#9bd6a8}
+#cal .sc{display:flex;align-items:center;justify-content:center;border-radius:12px;font-weight:700;font-size:14px;background:#232624;color:var(--mut);border:0;padding:0;direction:ltr}
+#cal .g{background:#1f3a28;color:#9bd6a8}#cal .y{background:#3a3217;color:#e8c46a}#cal .r{background:#3b2217;color:#ef8a64}
+#cal .det{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+#cal .det h3{margin:0 0 6px;font-size:16px}
+#cal .wk{display:flex;gap:8px;align-items:center;margin:8px 0;font-size:14px}
+#cal .nrow{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:8px 0;border-top:1px solid var(--line);white-space:pre-wrap;word-break:break-word}
+#cal .hist{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+#cal .hr{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13px;color:var(--mut)}
+#cal .hr .tr{flex:1;height:10px;border-radius:5px;background:#232624;overflow:hidden}
+#cal .hr .tr i{display:block;height:100%;border-radius:5px;background:#9bd6a8}
+#cal .hr .tr i.y{background:#e8c46a}#cal .hr .tr i.r{background:#ef8a64}
+#cal .hr span:last-child{width:30px;text-align:end;direction:ltr;color:var(--tx)}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;color-scheme:dark}
+button,input,select,textarea{font-family:inherit;touch-action:manipulation}
+button{min-height:40px}
+#proBtn{min-height:30px}
+.big,.val{font-variant-numeric:tabular-nums}
+#lw input,#lw select,#lw textarea{font-size:16px}
+input[type=checkbox]{accent-color:#2e8f55}
+.proLock{border-style:dashed}
+.proLock .r2{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.proLock h2{margin:0}
+#proBtn{cursor:pointer;background:none;font:inherit;font-size:13px}
+#proM{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+#proM[hidden]{display:none}
+#proM .box{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;max-width:420px;width:100%;max-height:90vh;overflow:auto}
+#proM h2{font-size:22px;margin:0 0 4px;justify-content:flex-start;gap:8px}
+#proM ul{padding-inline-start:20px;margin:12px 0;line-height:1.7}
+#proM .price{font-size:30px;font-weight:700;margin:6px 0;direction:ltr;text-align:start}
+#proM .acts{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+#proM .acts .go{flex:1}
+#proM .plans{display:flex;gap:8px;margin:12px 0 4px}
+#proM .plans button{flex:1;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px}
+#proM .plans button.go{border-color:#2e6b44}
+</style>
+</head>
+<body>
+<div class="top"><h1>בקרת חממה</h1><span style="display:flex;gap:6px;align-items:center"><button type="button" id="proBtn" class="pill">שדרג ל-Pro</button><span id="conn" class="pill">מתחבר…</span></span></div>
+<div id="banner" class="hide"></div>
+
+<div class="card" id="ap">
+  <div class="aprow">
+    <div><h2>טייס אוטומטי <span class="pill on">מומלץ</span></h2><div class="note" style="margin-top:2px">הכול רץ לבד, בהגדרות המומלצות</div></div>
+    <div class="aprow"><span class="pill" id="apState">כבוי</span><label class="sw"><input type="checkbox" id="apOn" aria-label="טייס אוטומטי"><span></span></label></div>
+  </div>
+  <ul>
+    <li>אוורור אוטומטי פועל על התרמוסטט עצמו</li>
+    <li>פתיחה כשחם מ-30° או כשהלחות מעל 80%, וסגירה כשהתנאים חוזרים לנורמה</li>
+    <li>התראות תמיד פעילות</li>
+    <li>חיישן LoRaWAN מדווח כל 30 דקות, כדי לחסוך סוללה</li>
+  </ul>
+  <div class="on-note" id="apNote" hidden>הטייס האוטומטי שולט. ההגדרות הידניות נעולות. כבה אותו כדי לשנות בעצמך.</div>
+</div>
+
+<div class="card hide" id="ai">
+  <h2>עוזר החממה <span class="pill on">AI</span></h2>
+  <p class="note" style="margin:0">שואלים בחופשיות. העוזר רואה את הקריאות החיות, הספים וההתראות. הוא רק מייעץ, ולא מפעיל את האוורור.</p>
+  <div class="msgs" id="aiMsgs" aria-live="polite"></div>
+  <div class="chips" id="aiChips">
+    <button type="button">מה מצב החממה עכשיו?</button>
+    <button type="button">האם לפתוח אוורור?</button>
+    <button type="button">איך הלחות השבוע?</button>
+    <button type="button">האם להשקות היום?</button>
+  </div>
+  <form id="aiForm"><input type="text" id="aiIn" placeholder="שאל את העוזר…" autocomplete="off" required><button class="go" id="aiGo">שלח</button></form>
+  <p class="note">התשובות הן הערכה כללית ולא מדידה מקצועית.</p>
+</div>
+
+<div id="pairCard" class="card hide">
+  <h2>צימוד המכשיר</h2>
+  <p class="note" style="margin-top:0">כדי שרק אתה תוכל לשלוט: לחץ והחזק את הכפתור (BOOT) על הבקר 3 שניות, ואז לחץ "צמד". הטלפון הזה יקבל מפתח סודי, ואף מכשיר אחר לא יוכל לשלוט בחממה.</p>
+  <div class="row first"><button class="go" id="pairBtn">צמד את הטלפון</button><span id="pairMsg" class="note"></span></div>
+</div>
+
+<div class="card">
+  <h2>מצב עכשיו <span class="pill" id="srcPill"></span></h2>
+  <div class="row first"><span>טמפרטורה</span><span class="big" id="temp">–</span></div>
+  <div class="row"><span>לחות</span><span class="big" id="hum">–</span></div>
+  <div class="row"><span>אוורור</span><span class="val" id="vent">–</span></div>
+  <div class="row"><span>סוללה וסולר</span><span class="val" id="batt">–</span></div>
+  <div class="row"><span>חיבור</span><span class="val" id="link">–</span></div>
+</div>
+
+<div class="card" id="autoCard">
+  <h2>אוורור אוטומטי <span class="pill on">Pro</span></h2>
+  <div class="row first"><span>הפעל אוורור אוטומטי</span><input type="checkbox" id="auto" style="width:22px;height:22px"></div>
+  <div class="row"><span>טמפרטורה מקסימלית (°)</span><input type="number" id="maxT" min="15" max="45" step="1"></div>
+  <div class="row"><span>לחות מקסימלית (%)</span><input type="number" id="maxH" min="30" max="100" step="1"></div>
+  <p class="note">הכללים רצים על התרמוסטט עצמו, כך שהאוורור ממשיך לעבוד גם בלי אינטרנט ובלי הטלפון.</p>
+</div>
+
+<div class="card">
+  <h2>התראות ותזכורות</h2>
+  <div id="alerts"></div>
+  <div id="rem"></div>
+  <form class="add" id="remForm">
+    <input type="text" id="remTxt" placeholder="תזכורת חדשה" required>
+    <select id="remDay"><option value="0">א׳</option><option value="1">ב׳</option><option value="2">ג׳</option><option value="3">ד׳</option><option value="4">ה׳</option><option value="5">ו׳</option><option value="6">שבת</option></select>
+    <input type="time" id="remTime" value="18:00" required>
+    <button class="go">הוסף</button>
+  </form>
+  <p class="note">התזכורות מופיעות כשהאפליקציה פתוחה.</p>
+</div>
+
+<div class="card">
+  <h2>קרקע <span class="pill" id="soilPill">חיישן 1</span></h2>
+  <div class="row first"><span>לחות קרקע</span><span class="big" id="soilM">–</span></div>
+  <div class="row"><span>טמפרטורת קרקע</span><span class="val" id="soilT">–</span></div>
+  <div class="row"><span>מוליכות (EC)</span><span class="val" id="soilE">–</span></div>
+</div>
+
+<div class="card">
+  <h2>שליטה ידנית באוורור</h2>
+  <div class="row first"><span>פתיחה ידנית</span><button class="go" id="bOpen">פתח</button></div>
+  <div class="row"><span>סגירה ידנית</span><button id="bClose">סגור</button></div>
+  <p class="note">פקודה ידנית משהה את האוטומט ל‑30 דקות.</p>
+</div>
+
+<div class="card">
+  <h2>חיבור Wi-Fi</h2>
+  <div class="row first"><span>שם הרשת</span><input type="text" id="wSsid" autocomplete="off" style="width:60%"></div>
+  <div class="row"><span>סיסמה</span><input type="password" id="wPass" autocomplete="off" style="width:60%"></div>
+  <div class="row"><span></span><button class="go" id="wSave">שמור והתחבר</button></div>
+  <p class="note">אחרי השמירה הבקר יתחבר לרשת ויתאתחל. אם לא ייתחבר, הוא יפתח שוב את רשת "Greenhouse".</p>
+</div>
+
+<div class="card">
+  <h2>מגמת לחות שבועית</h2>
+  <svg id="chart" viewBox="0 0 320 130" role="img" aria-label="גרף לחות שבועי"></svg>
+  <div class="stats"><span>מקסימום <b id="sMax">–</b></span><span>ממוצע <b id="sAvg">–</b></span><span>מינימום <b id="sMin">–</b></span></div>
+  <p class="note">הקו המקווקו הוא סף הלחות שהגדרת. כל נקודה היא שעה.</p>
+</div>
+
+<div class="card" id="cal">
+  <h2>יומן וציון שבועי <span class="pill" id="calStore">טוען…</span></h2>
+  <div class="nav"><button type="button" id="calNext" aria-label="חודש הבא">›</button><b id="calTitle"></b><button type="button" id="calPrev" aria-label="חודש קודם">‹</button></div>
+  <div class="grid" id="calGrid"></div>
+  <div style="text-align:start;margin-top:8px"><button type="button" class="x" id="calToday">חזור להיום</button></div>
+  <div class="det">
+    <h3 id="calDayT"></h3>
+    <div class="note" id="calDayS" style="margin:0"></div>
+    <div class="wk" id="calWk"></div>
+    <div id="calNotes"></div>
+    <form class="add" id="calForm"><input type="text" id="calTxt" maxlength="500" placeholder="זיכרון או הערה ליום הזה" required><button class="go">שמור</button></form>
+  </div>
+  <div class="hist"><div class="note" style="margin:0 0 6px">ציונים של השבועות האחרונים</div><div id="calHist"></div></div>
+  <p class="note">הציון הוא אחוז השעות שבהן הטמפרטורה והלחות היו בתוך הספים שהגדרת. שבוע מתחיל ביום ראשון. נדרשות לפחות 12 שעות של נתונים.</p>
+</div>
+
+<details class="card" id="lw">
+<summary><span>סימולטור חיישן LoRaWAN</span><span class="pill">חדש</span></summary>
+<div class="lwb">
+<p class="note" style="margin-top:0">לבדיקת חיישן קרקע אלחוטי (LoRaWAN) מול המפרט של הספק, לפני שמזמינים. מבוסס על Protocol V1.3.</p>
+
+<div id="lw_s1">
+<h3 class="f">1. בניית פאקטה (uplink)</h3>
+<div class="lwg">
+<label>טמפרטורה °C<input id="lw_temp" type="number" step="0.1" value="24.5"></label>
+<label>לחות קרקע %<input id="lw_moist" type="number" step="0.1" value="38.2"></label>
+<label>מוליכות EC<input id="lw_ec" type="number" value="850"></label>
+<label>pH<input id="lw_ph" type="number" step="0.01" value="6.45"></label>
+<label>חנקן N<input id="lw_n" type="number" value="42"></label>
+<label>זרחן P<input id="lw_p" type="number" value="18"></label>
+<label>אשלגן K<input id="lw_k" type="number" value="120"></label>
+<label>מליחות<input id="lw_sal" type="number" value="410"></label>
+<label>מתח סוללה mV<input id="lw_bat" type="number" step="10" value="3700"></label>
+<label>מחזור דיווח (שניות)<input id="lw_cyc" type="number" value="300"></label>
+<label>מזהה מכשיר<input id="lw_devid" type="number" value="1"></label>
+<label>מספר סידורי<input id="lw_ser" type="number" value="1"></label>
+<label>ערוץ<select id="lw_chan"><option value="868.1">EU868 – 868.1</option><option value="918.5">IL918 – 918.5</option><option value="902.3">US915 – 902.3</option><option value="433.4">433.4</option></select></label>
+</div>
+<div class="lwo"><div class="note" style="margin:0 0 4px">פאקטה בהקס</div><div class="lwm" id="lw_frame"></div>
+<div class="lwr"><button id="lw_copyFrame">העתק</button><button id="lw_toDecode">שלח לפענוח ↓</button></div></div>
+<p class="note">הנחות: ערכים של 2 בתים, checksum הוא סכום הבתים מודולו 256, וערוץ הוא התדר כפול 10. כדאי לאשר מול הספקית.</p>
+</div>
+
+<h3>2. פענוח פאקטה</h3>
+<p class="note" style="margin:0">מדביקים פאקטה אמיתית מהחיישן ובודקים שהיא תואמת למפרט.</p>
+<textarea id="lw_hexin" placeholder="49 53 00 01 ..."></textarea>
+<div class="lwr"><button class="go" id="lw_dec">פענח</button></div>
+<div id="lw_decout"></div>
+
+<h3>3. חיי סוללה לפי מרווח דיווח</h3>
+<p class="note" style="margin:0">לפי Mandy: כיומיים ב-5 דקות, וכשבוע ב-30 דקות. הערכה גסה שמותאמת משתי הנקודות, ולא מדידה.</p>
+<div class="lwg">
+<label>נקודה א: מרווח (דק׳)<input id="lw_t1" type="number" value="5"></label>
+<label>נקודה א: חיי סוללה (ימים)<input id="lw_l1" type="number" value="2" step="0.5"></label>
+<label>נקודה ב: מרווח (דק׳)<input id="lw_t2" type="number" value="30"></label>
+<label>נקודה ב: חיי סוללה (ימים)<input id="lw_l2" type="number" value="7" step="0.5"></label>
+</div>
+<label style="margin-top:12px"><span>המרווח שלי: <b id="lw_tv"></b> דקות</span><input id="lw_tx" type="range" min="1" max="240" value="15"></label>
+<div class="lwo"><div class="lwbig" id="lw_life"></div><div id="lw_lifeNote" class="note" style="margin:4px 0 0"></div></div>
+<svg id="lw_chart" viewBox="0 0 320 170" role="img" aria-label="גרף חיי סוללה לפי מרווח דיווח"></svg>
+
+<h3>4. בדיקת ספק כוח לחיישן</h3>
+<div class="lwg">
+<label>מתח פלט של ההגברה (V)<input id="lw_vout" type="number" value="12" step="0.5"></label>
+<label>זרם מקסימלי של ההגברה (mA)<input id="lw_imax" type="number" value="200"></label>
+<label>מתח החיישן מינימום (V)<input id="lw_vmin" type="number" value="7"></label>
+<label>מתח החיישן מקסימום (V)<input id="lw_vmax" type="number" value="24"></label>
+<label>זרם החיישן בפעולה (mA)<input id="lw_isen" type="number" value="40"></label>
+<label>נצילות ההגברה %<input id="lw_eff" type="number" value="85"></label>
+</div>
+<div class="lwo" id="lw_pwr"></div>
+<p class="note">הזרמים הם ערכי דוגמה, ועדיין צריך לקבל אותם מהספקית.</p>
+
+<h3>5. פקודת Modbus לשינוי מרווח (RS485)</h3>
+<label>מחזור דיווח חדש (שניות)<input id="lw_mb" type="number" min="1" max="65535" value="60"></label>
+<div class="lwo"><div class="lwm" id="lw_mbout"></div><div class="lwr"><button id="lw_copyMb">העתק</button></div></div>
+<p class="note">רגיסטר 2575 (0x0A0F), 9600 8N1, כתובת 0xFE. עבור 60 שניות זהה לדוגמה ב-PDF.</p>
+</div>
+</details>
+
+<script>
+const $=id=>document.getElementById(id);
+const store=(k,v)=>{try{return v===undefined?JSON.parse(localStorage.getItem(k)):localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
+// אם הדף לא נטען מהמכשיר עצמו (http) – מצב הדגמה
+const DEMO=location.protocol!=='http:';
+
+/* ---------- מצב הדגמה ---------- */
+const sim={t:24.5,h:65,vent:'closed',batt:92,rssi:-52,auto:true,maxT:30,maxH:80,hist:null,sm:62,st:21,se:1.6};
+setInterval(()=>{sim.sm=Math.min(68,Math.max(57,sim.sm+(62-sim.sm)*.1+(Math.random()-.5)*.6));sim.st=Math.min(23,Math.max(19,sim.st+(21-sim.st)*.1+(Math.random()-.5)*.1));sim.se=Math.min(1.9,Math.max(1.3,sim.se+(1.6-sim.se)*.1+(Math.random()-.5)*.02))},3000);
+(function(){const T=[],H=[];for(let i=0;i<168;i++){const d=Math.sin((i%24-9)/24*6.283);T.push(Math.round((24+3*d)*10));H.push(Math.round((65-3*d+((i*37)%7)/7*2)*10))}sim.hist={t:T,h:H}})();
+setInterval(()=>{if(!DEMO)return;
+ sim.t+=(24.5-sim.t)*.1+(Math.random()-.5)*.3;sim.h+=(65-sim.h)*.1+(Math.random()-.5)*.8;
+ sim.t=Math.min(27,Math.max(22,sim.t));sim.h=Math.min(70,Math.max(60,sim.h));
+ if(sim.auto&&!sim.hold){const hot=sim.t>sim.maxT,wet=sim.h>sim.maxH;
+  if((hot||wet)&&sim.vent==='closed')sim.vent='open';
+  else if(!hot&&!wet&&sim.t<sim.maxT-2&&sim.h<sim.maxH-5&&sim.vent==='open')sim.vent='closed'}},3000);
+async function demoApi(p,b){
+ if(p==='pair')return{token:'demo'};
+ if(p==='state')return{t:sim.t,h:sim.h,vent:sim.vent,batt:sim.batt,rssi:sim.rssi,auto:sim.auto,maxT:sim.maxT,maxH:sim.maxH,ok:true,soil:{ok:true,moist:sim.sm,temp:sim.st,ec:sim.se}};
+ if(p==='settings'){Object.assign(sim,{auto:!!b.auto,maxT:+b.maxT,maxH:+b.maxH});return{ok:true}}
+ if(p==='wifi')return{ok:true};
+ if(p==='vent'){sim.vent=b.cmd==='open'?'open':'closed';sim.hold=true;setTimeout(()=>sim.hold=false,30*60000);return{ok:true}}
+ if(p==='history')return{step:3600,...sim.hist}}
+
+/* ---------- תקשורת עם המכשיר ---------- */
+async function api(p,body){
+ if(DEMO)return demoApi(p,body);
+ const h={'Content-Type':'application/json'},t=store('token');if(t)h['X-Token']=t;
+ const r=await fetch('/api/'+p,{method:body?'POST':'GET',headers:h,body:body?JSON.stringify(body):undefined});
+ if(r.status===401){const e=new Error('auth');e.auth=true;throw e}
+ if(!r.ok){const e=new Error('http');e.code=r.status;throw e}
+ return r.json()}
+
+/* ---------- תצוגה ---------- */
+const VENT={open:'פתוח',closed:'סגור',opening:'נפתח…',closing:'נסגר…'};
+function render(s){
+ $('temp').textContent=s.t.toFixed(1)+'°';$('hum').textContent=Math.round(s.h)+'%';
+ $('vent').textContent=VENT[s.vent]||s.vent;
+ const so=s.soil||{};
+ $('soilM').textContent=so.ok?Math.round(so.moist)+'%':'–';
+ $('soilT').textContent=so.ok?so.temp.toFixed(1)+'°':'חיישן לא זמין';
+ $('soilE').textContent=so.ok?so.ec.toFixed(2)+' dS/m':'–';
+ $('soilPill').textContent=so.ok?'חי':'לא זמין';$('batt').textContent=Math.round(s.batt)+'%';
+ $('link').textContent=DEMO?'Wi-Fi · הדגמה':'Wi-Fi '+(s.rssi||'')+' dBm';
+ const c=$('conn');c.textContent=DEMO?'נתוני הדגמה':'מחובר';c.className='pill '+(DEMO?'':'on');
+ $('srcPill').textContent=DEMO?'נתוני הדגמה':'חי';
+ for(const id of['maxT','maxH'])if(document.activeElement!==$(id))$(id).value=s[id];
+ if(document.activeElement!==$('auto'))$('auto').checked=s.auto;
+ const a=[];
+ if(s.ok===false)a.push('חיישן לא מגיב – בדוק חיווט');
+ if(s.h>s.maxH)a.push(`לחות ${Math.round(s.h)}% מעל הסף ${s.maxH}%`);
+ if(s.t>s.maxT)a.push(`טמפרטורה ${s.t.toFixed(1)}° מעל הסף ${s.maxT}°`);
+ if(s.batt<20)a.push('סוללה נמוכה');
+ $('alerts').innerHTML=a.length?a.map(x=>`<div class="alert">⚠ ${x}</div>`).join(''):'<div class="note" style="margin:0 0 6px">אין התראות</div>';
+ if(s.h>s.maxH||s.t>s.maxT)buzzOnce()}
+let lastBuzz=0;function buzzOnce(){if(Date.now()-lastBuzz>600000){lastBuzz=Date.now();try{navigator.vibrate&&navigator.vibrate(200)}catch(e){}}}
+function banner(t){const b=$('banner');b.textContent=t;b.classList.toggle('hide',!t)}
+
+async function refresh(){
+ try{render(await api('state'));$('pairCard').classList.add('hide');banner('')}
+ catch(e){
+  if(e.auth){$('pairCard').classList.remove('hide');$('conn').textContent='לא מצומד';$('conn').className='pill off'}
+  else{$('conn').textContent='אין חיבור';$('conn').className='pill off';banner('אין חיבור למכשיר. ודא שהטלפון מחובר ל‑Wi-Fi של החממה.')}}}
+async function loadChart(){
+ let d;try{d=await api('history')}catch(e){return}
+ const H=d.h.map(v=>v/10),n=H.length;if(!n)return;
+ const W=320,Hh=130,pl=26,pb=14,x=i=>pl+(W-pl-4)*i/Math.max(1,n-1),y=v=>Hh-pb-(Hh-pb-6)*v/100;
+ let g='';for(const v of[0,50,100])g+=`<line x1="${pl}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="#34383a"/><text x="0" y="${y(v)+4}" fill="#9aa39a" font-size="10">${v}</text>`;
+ const mh=+$('maxH').value||sim.maxH;
+ g+=`<line x1="${pl}" x2="${W}" y1="${y(mh)}" y2="${y(mh)}" stroke="#ef8a64" stroke-dasharray="4 3"/>`;
+ g+=`<polyline fill="none" stroke="#9bd6a8" stroke-width="2" points="${H.map((v,i)=>x(i).toFixed(1)+','+y(v).toFixed(1)).join(' ')}"/>`;
+ $('chart').innerHTML=g;
+ $('sMax').textContent=Math.round(Math.max(...H))+'%';$('sMin').textContent=Math.round(Math.min(...H))+'%';
+ $('sAvg').textContent=Math.round(H.reduce((a,b)=>a+b,0)/n)+'%'}
+
+/* ---------- פעולות ---------- */
+async function saveSettings(){try{await api('settings',{auto:$('auto').checked,maxT:+$('maxT').value,maxH:+$('maxH').value});refresh();loadChart()}catch(e){banner('השמירה נכשלה')}}
+for(const id of['auto','maxT','maxH'])$(id).addEventListener('change',saveSettings);
+async function vent(cmd){try{await api('vent',{cmd});refresh()}catch(e){banner('הפקודה נכשלה')}}
+$('bOpen').onclick=()=>vent('open');$('bClose').onclick=()=>vent('close');
+$('wSave').onclick=async()=>{
+ const ssid=$('wSsid').value.trim();
+ if(!ssid){banner('כתוב שם רשת');return}
+ try{await api('wifi',{ssid,pass:$('wPass').value});banner(DEMO?'הדגמה: נשמר':'נשמר. הבקר מתאתחל ומתחבר לרשת…');$('wPass').value=''}
+ catch(e){banner(e.auth?'לא מצומד. צמד את הטלפון קודם':'השמירה נכשלה')}};
+$('pairBtn').onclick=async()=>{
+ $('pairMsg').textContent='';
+ try{const r=await api('pair',{});store('token',r.token);refresh();loadChart()}
+ catch(e){$('pairMsg').textContent=e.code===403?'חלון הצימוד סגור. החזק את BOOT 3 שניות ונסה שוב.':'שגיאת חיבור'}};
+
+/* ---------- תזכורות ---------- */
+const DAYS=['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','שבת'];
+let rems=store('rems')||[{txt:'להשקות את הערוגות',day:2,time:'18:00'},{txt:'לבדוק את הרשתות',day:6,time:'09:00'}];
+function drawRems(){$('rem').innerHTML=rems.map((r,i)=>`<div class="row"><span>${r.txt.replace(/</g,'&lt;')}</span><span><span class="pill">יום ${DAYS[r.day]} ${r.time}</span><button class="x" data-i="${i}" aria-label="מחק">✕</button></span></div>`).join('');
+ $('rem').querySelectorAll('.x').forEach(b=>b.onclick=()=>{rems.splice(+b.dataset.i,1);store('rems',rems);drawRems()})}
+$('remForm').onsubmit=e=>{e.preventDefault();rems.push({txt:$('remTxt').value.trim(),day:+$('remDay').value,time:$('remTime').value});store('rems',rems);$('remTxt').value='';drawRems()};
+let fired='';setInterval(()=>{const n=new Date(),k=n.getDay()+' '+n.toTimeString().slice(0,5);if(k===fired)return;
+ const hit=rems.filter(r=>r.day===n.getDay()&&r.time===k.slice(2));if(hit.length){fired=k;banner('⏰ '+hit.map(r=>r.txt).join(' · '));try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}},15000);
+
+drawRems();refresh();loadChart();setInterval(refresh,5000);setInterval(loadChart,60000);
+</script>
+<script>
+(function(){
+const $=id=>document.getElementById('lw_'+id);
+const H=(n,l)=>((n>>>0)&(l===1?0xFF:0xFFFF)).toString(16).toUpperCase().padStart(l*2,'0');
+const spaced=s=>s.match(/.{2}/g).join(' ');
+const s16=n=>Math.round(n)&0xFFFF;
+const copy=async(t,btn)=>{try{await navigator.clipboard.writeText(t);const o=btn.textContent;btn.textContent='הועתק ✓';setTimeout(()=>btn.textContent=o,1200)}catch(e){btn.textContent='סמן והעתק ידנית'}};
+
+function build(){
+  const num=id=>parseFloat($(id).value)||0;
+  const data=[num('temp')*10,num('moist')*10,num('ec'),num('ph')*100,num('n'),num('p'),num('k'),num('sal')].map(s16);
+  const head=[0x49,0x53];
+  const id=num('devid');
+  const rest=[];
+  const push=v=>{rest.push((v>>8)&255,v&255)};
+  push(0x0000);push(num('ser'));push(Math.round(parseFloat($('chan').value)*10));push(num('bat'));push(num('cyc'));
+  data.forEach(push);
+  const total=2+2+1+1+rest.length;
+  const body=[total,...rest];
+  const chk=body.reduce((a,b)=>a+b,0)&255;
+  const bytes=[...head,(id>>8)&255,id&255,chk,...body];
+  return bytes.map(b=>H(b,1)).join('');
+}
+function renderFrame(){$('frame').textContent=spaced(build())}
+document.querySelectorAll('#lw_s1 input,#lw_s1 select').forEach(e=>e.addEventListener('input',renderFrame));
+$('copyFrame').onclick=e=>copy(spaced(build()),e.target);
+$('toDecode').onclick=()=>{$('hexin').value=spaced(build());decode()};
+
+function decode(){
+  const raw=$('hexin').value.replace(/[^0-9a-fA-F]/g,'');
+  const out=$('decout');
+  if(raw.length<32||raw.length%2){out.innerHTML='<p class="note">הפאקטה קצרה מדי או שאורכה אי-זוגי.</p>';return}
+  const b=raw.match(/.{2}/g).map(h=>parseInt(h,16));
+  const w=i=>(b[i]<<8)|b[i+1];
+  const sw=i=>{const v=w(i);return v>32767?v-65536:v};
+  const issues=[];
+  if(b[0]!==0x49||b[1]!==0x53)issues.push('כותרת שונה מ-49 53 ("IS")');
+  if(b[5]!==b.length)issues.push(`שדה האורך (${b[5]}) שונה מאורך הפאקטה בפועל (${b.length})`);
+  const calc=b.slice(5).reduce((a,c)=>a+c,0)&255;
+  if(calc!==b[4])issues.push(`checksum לא תואם: בפאקטה ${H(b[4],1)}, בחישוב ${H(calc,1)}`);
+  const rows=[['מזהה מכשיר',w(2)],['סוג',H(w(6),2)],['מספר סידורי',w(8)],['ערוץ',(w(10)/10)+' MHz'],['מתח סוללה',w(12)+' mV'],['מחזור דיווח',w(14)+' שנ׳']];
+  const names=[['טמפרטורה',x=>(x/10).toFixed(1)+' °C',1],['לחות קרקע',x=>(x/10).toFixed(1)+' %',1],['מוליכות EC',x=>x,0],['pH',x=>(x/100).toFixed(2),0],['חנקן N',x=>x,0],['זרחן P',x=>x,0],['אשלגן K',x=>x,0],['מליחות',x=>x,0],['טמפרטורה 2',x=>(x/10).toFixed(1)+' °C',1],['לחות 2',x=>(x/10).toFixed(1)+' %',1]];
+  for(let i=0;i<names.length&&16+i*2+1<b.length;i++){const v=names[i][2]?sw(16+i*2):w(16+i*2);rows.push([names[i][0],names[i][1](v)])}
+  out.innerHTML=(issues.length?'<p><span class="lwbd lwbad">בעיות בפאקטה</span></p><ul>'+issues.map(x=>'<li>'+x+'</li>').join('')+'</ul>':'<p><span class="lwbd lwok">הפאקטה תואמת למפרט</span></p>')+
+    '<table><tr><th>שדה</th><th class="lwv">ערך</th></tr>'+rows.map(r=>`<tr><td>${r[0]}</td><td class="lwv">${r[1]}</td></tr>`).join('')+'</table>';
+}
+$('dec').onclick=decode;
+
+function fit(){
+  const t1=+$('t1').value,L1=+$('l1').value,t2=+$('t2').value,L2=+$('l2').value;
+  if(!(t1>0&&t2>0&&L1>0&&L2>0)||t1===t2)return null;
+  const b=(1/L1-1/L2)/(1/t1-1/t2),a=1/L1-b/t1;
+  if(!(a>=0&&b>=0))return null;
+  return {a,b};
+}
+const fmtDays=d=>d<1?`${Math.round(d*24)} שעות`:d<14?`${d.toFixed(1)} ימים`:`${(d/7).toFixed(1)} שבועות`;
+function battery(){
+  const t=+$('tx').value;$('tv').textContent=t;
+  const f=fit();
+  if(!f){$('life').textContent='—';$('lifeNote').textContent='הנתונים שהוזנו לא יוצרים עקומה הגיונית (אורך חיים צריך לעלות עם המרווח).';$('chart').innerHTML='';return}
+  const life=m=>1/(f.a+f.b/m);
+  const d=life(t);
+  $('life').textContent=fmtDays(d);
+  $('lifeNote').innerHTML=d<14?'<span class="lwbd lwwarn">קצר מדי לחממה ללא טעינה</span> כדאי פאנל סולארי או חיבור לחשמל.':'<span class="lwbd lwok">סביר</span> עדיין כדאי לבדוק מול מדידה אמיתית.';
+  const W=320,Hh=170,pl=34,pr=8,pt=8,pb=24,xmax=240;
+  const ymax=Math.max(life(xmax),life(1))*1.05;
+  const X=m=>pl+(m/xmax)*(W-pl-pr),Y=v=>Hh-pb-(v/ymax)*(Hh-pt-pb);
+  let pts='';for(let m=1;m<=xmax;m+=2)pts+=`${X(m).toFixed(1)},${Y(life(m)).toFixed(1)} `;
+  const ticks=[0,.5,1].map(f=>ymax*f);
+  $('chart').innerHTML=
+    ticks.map(v=>`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="currentColor" opacity=".12"/><text x="${pl-4}" y="${Y(v)+4}" text-anchor="end">${v.toFixed(0)}</text>`).join('')+
+    [0,60,120,180,240].map(m=>`<text x="${X(m)}" y="${Hh-8}" text-anchor="middle">${m}</text>`).join('')+
+    `<polyline points="${pts}" fill="none" stroke="#9bd6a8" stroke-width="2.5" stroke-linejoin="round"/>`+
+    `<circle cx="${X(t)}" cy="${Y(d)}" r="5" fill="#9bd6a8"/>`+
+    `<text x="${W-pr}" y="12" text-anchor="end">ימי סוללה לפי מרווח (דקות)</text>`;
+}
+['t1','l1','t2','l2','tx'].forEach(i=>$(i).addEventListener('input',battery));
+
+function power(){
+  const vo=+$('vout').value,im=+$('imax').value,vmin=+$('vmin').value,vmax=+$('vmax').value,is=+$('isen').value,ef=(+$('eff').value||100)/100;
+  const vOk=vo>=vmin&&vo<=vmax,iOk=is<=im;
+  const ibat=(vo*is)/(3.7*ef);
+  $('pwr').innerHTML=
+    `<p style="margin:0 0 6px">מתח: <span class="lwbd ${vOk?'lwok':'lwbad'}">${vOk?'בטווח החיישן':'מחוץ לטווח החיישן'}</span></p>`+
+    `<p style="margin:0 0 6px">זרם: <span class="lwbd ${iOk?'lwok':'lwbad'}">${iOk?'ההגברה מספיקה':'ההגברה חלשה מדי'}</span> (${is} מול ${im} mA)</p>`+
+    `<p style="margin:0">משיכה מהסוללה בזמן פעולת החיישן: <b>${ibat.toFixed(0)} mA</b> ב-3.7V</p>`;
+}
+['vout','imax','vmin','vmax','isen','eff'].forEach(i=>$(i).addEventListener('input',power));
+
+function crc16(a){let c=0xFFFF;for(const x of a){c^=x;for(let i=0;i<8;i++)c=c&1?(c>>1)^0xA001:c>>1}return c}
+function modbus(){
+  const v=Math.max(1,Math.min(65535,Math.round(+$('mb').value||0)));
+  const f=[0xFE,0x06,0x0A,0x0F,(v>>8)&255,v&255];
+  const c=crc16(f);f.push(c&255,c>>8);
+  $('mbout').textContent=f.map(x=>H(x,1)).join(' ');
+}
+$('mb').addEventListener('input',modbus);
+$('copyMb').onclick=e=>copy($('mbout').textContent,e.target);
+
+renderFrame();battery();power();modbus();
+})();
+</script>
+<script>
+(function(){
+const REC={maxT:30,maxH:80,interval:30};
+window.__isPro=window.__isPro||(()=>{try{return JSON.parse(localStorage.getItem('proState'))===true}catch(e){return false}});
+const $=id=>document.getElementById(id);
+let on=false;try{on=JSON.parse(localStorage.getItem('autopilot'))===true}catch(e){}
+let last=0;
+function lock(v){['auto','maxT','maxH','bOpen','bClose'].forEach(i=>{const e=$(i);if(e)e.disabled=v})}
+function ui(){
+  $('apOn').checked=on;$('apState').textContent=on?'פעיל':'כבוי';$('apState').className='pill'+(on?' on':'');
+  $('apNote').hidden=!on;lock(on);
+  if(on){const s=$('lw_tx');if(s){s.value=REC.interval;s.dispatchEvent(new Event('input'))}}
+}
+async function apply(){
+  if(Date.now()-last<3000)return;last=Date.now();
+  $('auto').checked=true;$('maxT').value=REC.maxT;$('maxH').value=REC.maxH;
+  try{await saveSettings()}catch(e){}
+}
+$('apOn').addEventListener('change',()=>{
+  on=$('apOn').checked;try{localStorage.setItem('autopilot',JSON.stringify(on))}catch(e){}
+  ui();if(on)apply();
+});
+const _render=render;
+render=function(s){_render(s);if(on&&window.__isPro()){lock(true);if(!s.auto||s.maxT!==REC.maxT||s.maxH!==REC.maxH)apply()}};
+ui();if(on&&window.__isPro())apply();
+})();
+</script>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+let cur=null;
+const _r=render;
+render=function(s){cur=s;_r(s)};
+const MAX_TURNS=10;
+const SYS='אתה עוזר חממה בתוך אפליקציית בקרה לחממה ביתית. ענה בעברית, קצר וברור (עד כ-5 משפטים), בלי עיצוב מרקדאון. לפני שאתה עונה על שאלה על מצב החממה, קרא את הנתונים בכלים. אל תמציא מספרים: השתמש רק בנתונים שהכלי החזיר. אתה יכול לייעץ בלבד, ואין לך שליטה על האוורור, ואם המשתמש מבקש לפתוח או לסגור, הפנה אותו לכפתורי השליטה הידנית או לטייס האוטומטי. כשאתה מייעץ על השקיה או אוורור, ציין שזו הערכה כללית.';
+let msgs=[],busy=false,sample=null;
+function add(cls,txt){const d=document.createElement('div');d.className='m '+cls;d.textContent=txt;$('aiMsgs').appendChild(d);$('aiMsgs').scrollTop=1e9;return d}
+const tools=[
+ {name:'get_greenhouse_state',description:'קריאות חיות: טמפרטורה, לחות, קרקע, אוורור, סוללה, ספים, מצב טייס אוטומטי',inputSchema:{type:'object',properties:{}},
+  execute:async()=>{const s=cur;if(!s)throw new Error('אין נתונים עדיין');const so=s.soil||{};
+   return {temperature_c:+s.t.toFixed(1),humidity_pct:Math.round(s.h),vent:s.vent,battery_pct:Math.round(s.batt),auto_vent:!!s.auto,max_temp_threshold:s.maxT,max_humidity_threshold:s.maxH,soil:so.ok?{moisture_pct:Math.round(so.moist),temp_c:+so.temp.toFixed(1),ec_dsm:+so.ec.toFixed(2)}:'unavailable',autopilot:(function(){try{return JSON.parse(localStorage.getItem('autopilot'))===true}catch(e){return false}})(),demo_data:DEMO}}},
+ {name:'get_humidity_history',description:'סטטיסטיקה של לחות אוויר בשבוע האחרון (מקסימום, ממוצע, מינימום, שעות מעל הסף)',inputSchema:{type:'object',properties:{}},
+  execute:async()=>{const d=await api('history');const H=d.h.map(v=>v/10),T=d.t.map(v=>v/10);const mh=cur?cur.maxH:80;
+   const f=a=>a.length?{max:Math.round(Math.max(...a)),avg:Math.round(a.reduce((x,y)=>x+y,0)/a.length),min:Math.round(Math.min(...a))}:null;
+   return {hours:H.length,humidity_pct:f(H),temp_c:f(T),hours_above_humidity_threshold:H.filter(v=>v>mh).length}}},
+ {name:'get_alerts_and_reminders',description:'התראות פעילות ותזכורות שהוגדרו',inputSchema:{type:'object',properties:{}},
+  execute:async()=>{const a=[...document.querySelectorAll('#alerts .alert')].map(e=>e.textContent.replace('⚠','').trim());
+   let r=[];try{r=JSON.parse(localStorage.getItem('rems'))||[]}catch(e){}return {alerts:a,reminders:r.map(x=>x.txt+' (יום '+DAYS[x.day]+' '+x.time+')')}}}
+];
+async function ask(q){
+ if(busy||!sample)return;busy=true;$('aiGo').disabled=true;
+ add('u',q);msgs.push({role:'user',content:q});
+ const out=add('a','חושב…');
+ const recent=msgs.slice(-MAX_TURNS*2);
+ const input=recent.map((m,i)=>i===0&&m.role==='user'?{role:'user',content:SYS+'\n\n'+m.content}:m);
+ if(input[0].role!=='user')input.shift();
+ try{
+  const r=await sample(input,{tools,cache:false,modelTier:'quick',onText:({text})=>{out.textContent=text||'חושב…';$('aiMsgs').scrollTop=1e9}});
+  out.textContent=r.text||'לא התקבלה תשובה.';msgs.push({role:'assistant',content:r.text||''});
+ }catch(e){
+  msgs.pop();
+  out.textContent=e&&e.code==='rate_limited'?'יותר מדי בקשות. נסה שוב בעוד רגע.':e&&e.code==='not_granted'?'העוזר לא אושר לשימוש.':'העוזר לא זמין כרגע.';
+ }
+ busy=false;$('aiGo').disabled=false;
+}
+$('aiForm').onsubmit=e=>{e.preventDefault();const v=$('aiIn').value.trim();if(!v)return;$('aiIn').value='';ask(v)};
+$('aiChips').querySelectorAll('button').forEach(b=>b.onclick=()=>ask(b.textContent));
+try{
+ (window.claude&&claude.use?claude.use('sample'):Promise.resolve(null)).then(s=>{
+  if(!s)return;sample=s;$('ai').classList.remove('hide');
+  add('a','שלום! אני עוזר החממה. אפשר לשאול אותי על הטמפרטורה, הלחות, הקרקע או האוורור.');
+ }).catch(()=>{});
+}catch(e){}
+})();
+</script>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const key=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const MONTHS=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+const DN=['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
+const DF=['יום ראשון','יום שני','יום שלישי','יום רביעי','יום חמישי','יום שישי','שבת'];
+const MINH=12;
+let days={},store=null,ready=false,saveErr=false;
+window.__saveDoc=(n,o)=>store&&store.writeDoc?store.writeDoc(n,o):Promise.resolve();
+let view=new Date();view.setDate(1);view.setHours(0,0,0,0);
+let sel=key(new Date());
+const dirty=new Set();let timer=null,writing=false;
+function getDay(k){if(!days[k])days[k]={date:k,notes:[],hrs:{},demo:false};const d=days[k];if(!d.notes)d.notes=[];if(!d.hrs)d.hrs={};return d}
+function touch(k){dirty.add(k);setStatus();clearTimeout(timer);timer=setTimeout(flush,2500)}
+async function flush(){
+ if(!store)return;
+ if(writing){timer=setTimeout(flush,1500);return}
+ writing=true;
+ for(const k of [...dirty]){dirty.delete(k);
+  try{await store.write(k,JSON.parse(JSON.stringify(days[k])));saveErr=false}catch(e){dirty.add(k);saveErr=true;break}}
+ writing=false;setStatus();
+}
+function setStatus(){
+ const p=$('calStore');if(!store){p.textContent='טוען…';p.className='pill';return}
+ if(saveErr){p.textContent='השמירה נכשלה';p.className='pill off';return}
+ if(dirty.size){p.textContent='שומר…';p.className='pill';return}
+ p.textContent=store.mode==='db'?'נשמר בחשבון':'נשמר רק בדפדפן הזה';p.className='pill '+(store.mode==='db'?'on':'');
+}
+const rows=s=>(s&&s.docs)?s.docs:(Array.isArray(s)?s:[]);
+const dat=d=>typeof d.data==='function'?d.data():(d.data||d);
+function mergeIn(o){if(!o||!o.date||dirty.has(o.date))return;days[o.date]={date:o.date,notes:o.notes||[],hrs:o.hrs||{},demo:!!o.demo}}
+async function initStore(){
+ let db=null,user=null;
+ try{if(window.claude&&claude.use){db=await claude.use('db');user=await claude.use('user')}}catch(e){}
+ if(db&&user){
+  try{
+   const id=await user.id();
+   const col=db.collection('data/users/'+id);
+   store={mode:'db',write:(k,o)=>col.doc('cal-'+k).set(o),writeDoc:(n,o)=>col.doc(n).set(o)};
+   await new Promise(res=>{
+    const t=setTimeout(res,10000);
+    try{col.onSnapshot(snap=>{rows(snap).forEach(d=>{const o=dat(d);if(o&&o.proDoc){try{window.__proSync&&window.__proSync(o)}catch(e){}}else mergeIn(o)});clearTimeout(t);res();if(ready)draw()},()=>{clearTimeout(t);res()})}catch(e){clearTimeout(t);res()}
+   });
+  }catch(e){store=null}
+ }
+ if(!store){
+  try{const o=JSON.parse(localStorage.getItem('cal'))||{};Object.keys(o).forEach(k=>mergeIn(o[k]))}catch(e){}
+  store={mode:'local',write:async()=>{localStorage.setItem('cal',JSON.stringify(days))},writeDoc:async()=>{}};
+ }
+ ready=true;setStatus();draw();backfill();
+}
+function okOf(t,h){const T=cur2?cur2.maxT:30,Hh=cur2?cur2.maxH:80;return(t<=T&&h<=Hh)?1:0}
+let cur2=null,lastW=0,lastOk=null;
+async function backfill(){
+ try{
+  const d=await api('history');const n=d.h.length,now=Date.now();
+  for(let i=0;i<n;i++){
+   const ts=new Date(now-(n-1-i)*3600000),k=key(ts),hr=ts.getHours(),day=getDay(k);
+   const t=d.t[i]/10,h=d.h[i]/10,nv=[Math.round(t*10)/10,Math.round(h*10)/10,okOf(t,h)],ov=day.hrs[hr];
+   if(!ov||(DEMO&&(ov[0]!==nv[0]||ov[1]!==nv[1]||ov[2]!==nv[2]))){day.hrs[hr]=nv;if(DEMO)day.demo=true;touch(k)}
+  }
+  draw();
+ }catch(e){}
+}
+function record(s){
+ cur2=s;if(!ready)return;
+ const now=new Date(),k=key(now),hr=now.getHours(),day=getDay(k);
+ const ok=okOf(s.t,s.h),prev=day.hrs[hr];
+ const v=[Math.round(s.t*10)/10,Math.round(s.h*10)/10,ok];
+ day.hrs[hr]=v;if(DEMO)day.demo=true;
+ if(!prev||prev[2]!==ok||Date.now()-lastW>600000){lastW=Date.now();touch(k);draw()}
+}
+const _r3=render;render=function(s){_r3(s);try{record(s)}catch(e){}};
+function weekStart(d){const s=new Date(d);s.setHours(0,0,0,0);s.setDate(s.getDate()-s.getDay());return s}
+function stat(day){let n=0,ok=0,ts=0,hs=0;if(day)for(const v of Object.values(day.hrs||{})){n++;ok+=v[2];ts+=v[0];hs+=v[1]}return{n,ok,t:n?ts/n:0,h:n?hs/n:0}}
+function weekScore(start){let n=0,ok=0,demo=false;for(let i=0;i<7;i++){const day=days[key(addDays(start,i))];const s=stat(day);n+=s.n;ok+=s.ok;if(day&&day.demo)demo=true}return n>=MINH?{score:Math.round(100*ok/n),n,demo}:null}
+const cls=sc=>sc>=85?'g':sc>=65?'y':'r';
+const grade=sc=>sc>=90?'מצוין':sc>=80?'טוב מאוד':sc>=65?'סביר':'דורש תשומת לב';
+function draw(){
+ if(!ready)return;
+ $('calTitle').textContent=MONTHS[view.getMonth()]+' '+view.getFullYear();
+ const todayK=key(new Date());
+ let h=DN.map(x=>`<div class="hd">${x}</div>`).join('')+'<div class="hd">ציון</div>';
+ let c=weekStart(view);
+ const last=new Date(view.getFullYear(),view.getMonth()+1,0);
+ while(c<=last){
+  for(let i=0;i<7;i++){
+   const d=addDays(c,i),k=key(d),day=days[k],st=stat(day);
+   const other=d.getMonth()!==view.getMonth();
+   const bar=st.n?`<span class="bar" style="background:${cls(100*st.ok/st.n)==='g'?'#9bd6a8':cls(100*st.ok/st.n)==='y'?'#e8c46a':'#ef8a64'}"></span>`:'<span class="bar"></span>';
+   const nt=day&&day.notes&&day.notes.length?'<span class="nt"></span>':'';
+   h+=`<button type="button" class="d${other?' o':''}${k===todayK?' today':''}${k===sel?' sel':''}" data-k="${k}" aria-label="${d.getDate()} ${MONTHS[d.getMonth()]}">${nt}<span>${d.getDate()}</span>${bar}</button>`;
+  }
+  const w=weekScore(c);
+  h+=w?`<button type="button" class="sc ${cls(w.score)}" data-k="${key(c)}">${w.score}</button>`:`<div class="sc">–</div>`;
+  c=addDays(c,7);
+ }
+ $('calGrid').innerHTML=h;
+ $('calGrid').querySelectorAll('button[data-k]').forEach(b=>b.onclick=()=>{sel=b.dataset.k;const d=new Date(sel+'T00:00:00');if(d.getMonth()!==view.getMonth()){view=new Date(d.getFullYear(),d.getMonth(),1)}draw()});
+ drawDay();drawHist();
+}
+function drawDay(){
+ const d=new Date(sel+'T00:00:00'),day=days[sel],st=stat(day);
+ $('calDayT').textContent=DF[d.getDay()]+', '+d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear();
+ $('calDayS').textContent=st.n?`טמפרטורה ממוצעת ${st.t.toFixed(1)}°, לחות ממוצעת ${Math.round(st.h)}%. ${st.ok} מתוך ${st.n} שעות בגבולות`+(day&&day.demo?' (נתוני הדגמה)':''):'אין נתוני חיישנים ליום הזה';
+ const ws=weekStart(d),w=weekScore(ws),we=addDays(ws,6);
+ $('calWk').innerHTML=(w?`<span class="pill ${w.score>=85?'on':w.score<65?'off':''}">ציון שבוע ${w.score}</span><span>${grade(w.score)}</span>`:'<span class="pill">אין עדיין ציון לשבוע הזה</span>')+`<span class="note" style="margin:0">${ws.getDate()}.${ws.getMonth()+1} עד ${we.getDate()}.${we.getMonth()+1}</span>`;
+ const notes=(day&&day.notes)||[];
+ $('calNotes').innerHTML=notes.map((n,i)=>`<div class="nrow"><span>${esc(n.txt)}</span><button class="x" data-i="${i}" aria-label="מחק">✕</button></div>`).join('');
+ $('calNotes').querySelectorAll('.x').forEach(b=>b.onclick=()=>{const dd=getDay(sel);dd.notes.splice(+b.dataset.i,1);touch(sel);draw()});
+}
+function drawHist(){
+ let h='',c=weekStart(new Date()),any=false;
+ for(let i=0;i<8;i++){
+  const w=weekScore(c);
+  if(w){any=true;h+=`<div class="hr"><span style="width:64px">${c.getDate()}.${c.getMonth()+1}</span><div class="tr"><i class="${cls(w.score)==='g'?'':cls(w.score)}" style="width:${w.score}%"></i></div><span>${w.score}</span></div>`}
+  c=addDays(c,-7);
+ }
+ $('calHist').innerHTML=any?h:'<div class="note" style="margin:0">עדיין אין מספיק נתונים. הציונים יופיעו כאן אחרי כמה שעות של קריאות.</div>';
+}
+$('calPrev').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()-1,1);draw()};
+$('calNext').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()+1,1);draw()};
+$('calToday').onclick=()=>{const n=new Date();view=new Date(n.getFullYear(),n.getMonth(),1);sel=key(n);draw()};
+$('calForm').onsubmit=e=>{e.preventDefault();const t=$('calTxt').value.trim();if(!t||!ready)return;getDay(sel).notes.push({txt:t.slice(0,500),ts:Date.now()});$('calTxt').value='';touch(sel);draw()};
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&dirty.size){clearTimeout(timer);flush()}});
+initStore();
+})();
+</script>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const PLANS={monthly:{p:'$4.99',per:'לחודש'},yearly:{p:'$49.90',per:'לשנה'}};
+let plan='yearly';try{plan=localStorage.getItem('proPlan')==='monthly'?'monthly':'yearly'}catch(e){}
+let pro=false;
+try{pro=JSON.parse(localStorage.getItem('proState'))===true}catch(e){}
+window.__isPro=()=>pro;
+const gated=[
+ {id:'ap',name:'טייס אוטומטי',desc:'מפעיל את הכול לבד בהגדרות המומלצות, בלחיצה אחת'},
+ {id:'ai',name:'עוזר חממה (AI)',desc:'שואלים שאלות על החממה, והעוזר רואה את הקריאות החיות'},
+ {id:'autoCard',name:'אוורור אוטומטי',desc:'הגדרת ספי טמפרטורה ולחות והפעלת האוורור האוטומטי'},
+ {id:'lw',name:'סימולטור חיישן LoRaWAN',desc:'בדיקת חיישן קרקע אלחוטי מול המפרט: פאקטות, סוללה, כוח ו-Modbus'}
+];
+gated.forEach(g=>{
+ const el=$(g.id),c=document.createElement('div');c.className='card proLock';
+ c.innerHTML='<div class="r2"><div><h2>🔒 '+g.name+' <span class="pill on">Pro</span></h2><div class="note" style="margin:4px 0 0">'+g.desc+'</div></div></div>';
+ const b=document.createElement('button');b.type='button';b.className='go';b.style.marginTop='12px';b.textContent='שדרג ל-Pro';b.onclick=openM;c.appendChild(b);
+ el.parentNode.insertBefore(c,el);g.el=el;g.lock=c;
+});
+const m=document.createElement('div');m.id='proM';m.hidden=true;
+m.innerHTML='<div class="box" role="dialog" aria-modal="true" aria-labelledby="proT"><h2 id="proT">מנוי Pro</h2><div class="note" id="proSt" style="margin:0"></div><div class="plans"><button type="button" data-p="monthly">חודשי</button><button type="button" data-p="yearly">שנתי <span class="pill on">חיסכון 17%</span></button></div><div class="price"><span id="proPr"></span> <span id="proPer" style="font-size:15px;font-weight:400;color:var(--mut)"></span></div><div class="note" id="proSv" style="margin:0"></div><div class="note" style="margin:0">מחירים לדוגמה</div><ul><li>אוורור אוטומטי עם ספים אישיים</li><li>טייס אוטומטי בלחיצה אחת</li><li>עוזר חממה (AI)</li><li>סימולטור חיישן LoRaWAN</li></ul><div class="note">בגרסת ההדגמה אין חיוב אמיתי. הכפתור מדגים את הזרימה בלבד.</div><div class="acts"><button type="button" class="go" id="proGo"></button><button type="button" id="proX">סגור</button></div></div>';
+document.body.appendChild(m);
+function openM(){m.hidden=false;apply()}
+function closeM(){m.hidden=true}
+function setPro(v){
+ pro=v;try{localStorage.setItem('proState',JSON.stringify(v));localStorage.setItem('proPlan',plan)}catch(e){}
+ apply();
+ try{Promise.resolve(window.__saveDoc&&window.__saveDoc('pro',{proDoc:true,pro:v,plan:plan,ts:Date.now()})).catch(()=>{})}catch(e){}
+}
+function apply(){
+ gated.forEach(g=>{g.el.style.display=pro?'':'none';g.lock.style.display=pro?'none':'';if(!pro&&g.el.open)g.el.open=false});
+ $('proBtn').textContent=pro?'Pro ✓':'שדרג ל-Pro';$('proBtn').className='pill'+(pro?' on':'');
+ $('proSt').textContent=pro?'המנוי פעיל ('+(plan==='yearly'?'שנתי':'חודשי')+').':'המנוי לא פעיל.';
+ m.querySelectorAll('.plans button').forEach(b=>{b.className=b.dataset.p===plan?'go':'';b.disabled=pro&&b.dataset.p!==plan});
+ $('proPr').textContent=PLANS[plan].p;$('proPer').textContent='/ '+PLANS[plan].per;
+ $('proSv').textContent=plan==='yearly'?'שנה שלמה במחיר של 10 חודשים. שני חודשים במתנה, כלומר $4.17 לחודש.':'חיוב חודשי, אפשר לבטל בכל עת.';
+ $('proGo').textContent=pro?'בטל מנוי':'הפעל Pro (הדגמה, ללא חיוב)';
+}
+$('proGo').onclick=()=>{setPro(!pro);if(pro)closeM()};
+m.querySelectorAll('.plans button').forEach(b=>b.onclick=()=>{if(pro)return;plan=b.dataset.p;try{localStorage.setItem('proPlan',plan)}catch(e){}apply()});
+$('proX').onclick=closeM;
+m.addEventListener('click',e=>{if(e.target===m)closeM()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM()});
+$('proBtn').onclick=openM;
+window.__proSync=o=>{if(typeof o.pro==='boolean'&&(o.pro!==pro||(o.plan&&o.plan!==plan))){pro=o.pro;if(o.plan==='monthly'||o.plan==='yearly')plan=o.plan;try{localStorage.setItem('proState',JSON.stringify(pro));localStorage.setItem('proPlan',plan)}catch(e){}apply()}};
+apply();
+})();
+</script>
+</body>
+</html>
