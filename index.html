@@ -350,8 +350,8 @@ function render(s){
  $('soilE').textContent=so.ok?so.ec.toFixed(2)+' dS/m':'–';
  $('soilPill').textContent=so.ok?'חי':'לא זמין';$('batt').textContent=Math.round(s.batt)+'%';
  $('link').textContent=DEMO?'Wi-Fi · הדגמה':'Wi-Fi '+(s.rssi||'')+' dBm';
- const c=$('conn');c.textContent=DEMO?'נתוני הדגמה':'מחובר';c.className='pill '+(DEMO?'':'on');
- $('srcPill').textContent=DEMO?'נתוני הדגמה':'חי';
+ const c=$('conn');c.textContent=DEMO?'לא מחובר לבקר':'מחובר';c.className='pill '+(DEMO?'':'on');
+ $('srcPill').textContent=DEMO?'לא מחובר לבקר':'חי';
  for(const id of['maxT','maxH'])if(document.activeElement!==$(id))$(id).value=s[id];
  if(document.activeElement!==$('auto'))$('auto').checked=s.auto;
  const a=[];
