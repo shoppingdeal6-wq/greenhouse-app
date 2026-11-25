@@ -29,6 +29,8 @@ jobs:
           cp index.html www/index.html
           npm init -y
           npm install @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7
+          npm install jsqr@1.4.0
+          cp node_modules/jsqr/dist/jsQR.js www/jsQR.js
           cat > capacitor.config.json <<'EOF'
           {
             "appId": "com.greenhouse.control",
@@ -38,6 +40,7 @@ jobs:
           }
           EOF
           npx cap add android
+          sed -i 's#</manifest>#    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n</manifest>#' android/app/src/main/AndroidManifest.xml
           npx cap sync android
 
       - name: Build debug APK
